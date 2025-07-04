@@ -13,7 +13,7 @@ export default function JobNotFound() {
           </div>
           <CardTitle className="text-3xl">Job Not Found</CardTitle>
           <CardDescription className="text-lg">
-            Sorry, we couldn't find the job posting you're looking for.
+            Sorry, we couldn&apos;t find the job posting you&apos;re looking for.
           </CardDescription>
         </CardHeader>
         

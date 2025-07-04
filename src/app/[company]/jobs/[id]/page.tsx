@@ -117,7 +117,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ comp
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <DynamicApplicationForm jobId={id} jobTitle={job.name} companySlug={company} questions={job.questions} />
+            <DynamicApplicationForm jobId={id} companySlug={company} questions={job.questions} />
           </CardContent>
         </Card>
       </div>

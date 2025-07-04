@@ -257,7 +257,18 @@ export const greenhouseRouter = createTRPCRouter({
     .input(
       z.object({
         jobId: z.string(),
-        formData: z.record(z.any()), // Dynamic form data with Greenhouse field names
+        formData: z.object({
+          first_name: z.string(),
+          last_name: z.string(),
+          email: z.string().email(),
+          phone: z.string().optional(),
+          resume: z.object({
+            filename: z.string(),
+            content: z.string(),
+            contentType: z.string(),
+          }).optional(),
+          cover_letter: z.string().optional(),
+        }).passthrough(), // Allow additional fields for custom questions
       })
     )
     .mutation(async ({ input }) => {
@@ -265,36 +276,16 @@ export const greenhouseRouter = createTRPCRouter({
         const { formData } = input;
         
         // Build request body from form data
-        const requestBody = {
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          email_addresses: formData.email ? [
-            {
-              value: formData.email,
-              type: "personal",
-            },
-          ] : [],
-          applications: [
-            {
-              job_id: parseInt(input.jobId),
-            },
-          ],
-          attachments: [],
-        };
-
-        // Add phone if provided
-        if (formData.phone) {
-          requestBody.phone_numbers = [
-            {
-              value: formData.phone,
-              type: "mobile",
-            },
-          ];
-        }
+        const attachments: Array<{
+          filename: string;
+          type: string;
+          content: string;
+          content_type: string;
+        }> = [];
 
         // Add resume if provided
-        if (formData.resume && typeof formData.resume === 'object') {
-          requestBody.attachments.push({
+        if (formData.resume) {
+          attachments.push({
             filename: formData.resume.filename,
             type: "resume",
             content: formData.resume.content,
@@ -304,13 +295,38 @@ export const greenhouseRouter = createTRPCRouter({
 
         // Add cover letter if provided
         if (formData.cover_letter) {
-          requestBody.attachments.push({
+          attachments.push({
             filename: "cover_letter.txt",
             type: "cover_letter",
             content: Buffer.from(formData.cover_letter).toString("base64"),
             content_type: "text/plain",
           });
         }
+
+        const requestBody = {
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          email_addresses: [
+            {
+              value: formData.email,
+              type: "personal",
+            },
+          ],
+          applications: [
+            {
+              job_id: parseInt(input.jobId),
+            },
+          ],
+          attachments,
+          ...(formData.phone && {
+            phone_numbers: [
+              {
+                value: formData.phone,
+                type: "mobile",
+              },
+            ],
+          }),
+        };
 
         const response = await fetch(
           "https://harvest.greenhouse.io/v1/candidates",
