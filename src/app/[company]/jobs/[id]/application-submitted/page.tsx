@@ -5,9 +5,10 @@ import { Button } from "~/components/ui/button";
 import { CheckCircle2, ArrowLeft, Home } from "lucide-react";
 import Link from "next/link";
 
-export default async function ApplicationSubmittedPage({ params }: { params: { id: string } }) {
+export default async function ApplicationSubmittedPage({ params }: { params: Promise<{ company: string; id: string }> }) {
+  const { company, id } = await params;
   try {
-    const job = await api.greenhouse.getJob({ id: params.id });
+    const job = await api.greenhouse.getJob({ id });
     
     return (
       <div className="container mx-auto px-4 py-16 max-w-2xl">
@@ -46,13 +47,13 @@ export default async function ApplicationSubmittedPage({ params }: { params: { i
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Link href={`/jobs/${params.id}`} className="flex-1">
+              <Link href={`/${company}/jobs/${id}`} className="flex-1">
                 <Button variant="outline" className="w-full">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Job Details
                 </Button>
               </Link>
-              <Link href="/" className="flex-1">
+              <Link href={`/${company}`} className="flex-1">
                 <Button className="w-full">
                   <Home className="mr-2 h-4 w-4" />
                   View More Jobs

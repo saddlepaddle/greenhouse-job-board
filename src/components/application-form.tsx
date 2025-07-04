@@ -13,16 +13,17 @@ import { Loader2, Upload } from "lucide-react";
 interface ApplicationFormProps {
   jobId: string;
   jobTitle: string;
+  companySlug: string;
 }
 
-export function ApplicationForm({ jobId, jobTitle }: ApplicationFormProps) {
+export function ApplicationForm({ jobId, jobTitle, companySlug }: ApplicationFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   
   const submitApplication = api.greenhouse.submitApplication.useMutation({
     onSuccess: () => {
-      router.push(`/jobs/${jobId}/application-submitted`);
+      router.push(`/${companySlug}/jobs/${jobId}/application-submitted`);
     },
     onError: (error) => {
       setError(error.message || "Failed to submit application. Please try again.");

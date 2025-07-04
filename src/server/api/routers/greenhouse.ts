@@ -1,3 +1,8 @@
+/**
+ * See https://developers.greenhouse.io/harvest.html for more info. 
+ * This router is built for public consumption, so we hide confidential jobs and jobs without open openings.
+ */
+
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { env } from "~/env";
@@ -8,6 +13,7 @@ interface GreenhouseJob {
   name: string;
   requisition_id: string;
   status: string;
+  confidential: boolean;
   created_at: string;
   opened_at: string;
   departments: Array<{
@@ -23,10 +29,13 @@ interface GreenhouseJob {
   }>;
   openings: Array<{
     id: number;
+    opening_id?: string | null;
     status: string;
     opened_at: string;
+    closed_at?: string | null;
+    application_id?: number | null;
   }>;
-  custom_fields: {
+  custom_fields?: {
     employment_type?: string;
     salary_range?: {
       min_value: string;
@@ -58,7 +67,28 @@ const getAuthHeader = () => {
   return `Basic ${base64}`;
 };
 
+// Hardcoded company data - in a real app, this would come from a database
+const companies: Record<string, { slug: string; name: string; description: string; logo?: string }> = {
+  paraform: {
+    slug: "paraform",
+    name: "Paraform",
+    description: "We're building the future of recruiting. Join our team to revolutionize how companies find talent.",
+    logo: "/social/paraform/logo.svg"
+  }
+};
+
 export const greenhouseRouter = createTRPCRouter({
+  // Get company by slug
+  getCompany: publicProcedure
+    .input(z.object({ slug: z.string() }))
+    .query(({ input }) => {
+      const company = companies[input.slug.toLowerCase()];
+      if (!company) {
+        throw new Error("Company not found");
+      }
+      return company;
+    }),
+
   getJobs: publicProcedure.query(async () => {
     try {
       const response = await fetch("https://harvest.greenhouse.io/v1/jobs", {
@@ -74,7 +104,12 @@ export const greenhouseRouter = createTRPCRouter({
 
       const jobs = await response.json() as GreenhouseJob[];
       
-      return jobs.filter(job => job.status === "open");
+      // Filter out confidential jobs, closed jobs, and jobs without open openings
+      return jobs.filter(job => 
+        job.status === "open" && 
+        !job.confidential &&
+        job.openings.some(opening => opening.status === "open")
+      );
     } catch (error) {
       console.error("Error fetching jobs:", error);
       throw new Error("Failed to fetch jobs from Greenhouse");
@@ -103,6 +138,12 @@ export const greenhouseRouter = createTRPCRouter({
         }
 
         const job = await response.json() as GreenhouseJob;
+        
+        // Don't return confidential jobs or jobs without open positions
+        if (job.confidential || !job.openings.some(opening => opening.status === "open")) {
+          throw new Error("Job not found");
+        }
+        
         return job;
       } catch (error) {
         console.error("Error fetching job:", error);

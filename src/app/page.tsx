@@ -1,98 +1,50 @@
-import { api } from "~/trpc/server";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import { Badge } from "~/components/ui/badge";
-import { MapPin, Building2, DollarSign, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { ArrowRight, Building2 } from "lucide-react";
 
-export default async function JobListingsPage() {
-  const jobs = await api.greenhouse.getJobs();
-
-  // Group jobs by company (using departments as a proxy for now)
-  const jobsByCompany = jobs.reduce((acc, job) => {
-    const company = job.departments[0]?.name || "Other";
-    if (!acc[company]) {
-      acc[company] = [];
-    }
-    acc[company].push(job);
-    return acc;
-  }, {} as Record<string, typeof jobs>);
-
+export default function LandingPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Open Positions</h1>
-        <p className="text-muted-foreground mt-2">
-          Find your next opportunity at leading companies
-        </p>
-      </div>
-
-      {Object.entries(jobsByCompany).map(([company, companyJobs]) => (
-        <div key={company} className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            {company}
-          </h2>
-          
-          <div className="grid gap-4">
-            {companyJobs.map((job) => (
-              <Link key={job.id} href={`/jobs/${job.id}`}>
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl">{job.name}</CardTitle>
-                        <CardDescription className="flex items-center gap-4 mt-2">
-                          {job.offices[0] && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-4 w-4" />
-                              {job.offices[0].name}
-                            </span>
-                          )}
-                          {job.custom_fields?.employment_type && (
-                            <span className="flex items-center gap-1">
-                              <Briefcase className="h-4 w-4" />
-                              {job.custom_fields.employment_type}
-                            </span>
-                          )}
-                        </CardDescription>
-                      </div>
-                      <Badge variant="secondary">
-                        {job.openings.filter(o => o.status === "open").length} opening
-                        {job.openings.filter(o => o.status === "open").length !== 1 ? "s" : ""}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {job.custom_fields?.salary_range && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <DollarSign className="h-4 w-4" />
-                        <span>
-                          ${parseInt(job.custom_fields.salary_range.min_value).toLocaleString()} - 
-                          ${parseInt(job.custom_fields.salary_range.max_value).toLocaleString()} {job.custom_fields.salary_range.unit}
-                        </span>
-                      </div>
-                    )}
-                    <div className="mt-4">
-                      <Button variant="outline" className="w-full">
-                        View Details & Apply
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+    <div className="container mx-auto px-4 py-16">
+      <div className="max-w-4xl mx-auto text-center space-y-8">
+        <div className="space-y-4">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
+            Welcome to Our Job Board
+          </h1>
+          <p className="text-xl text-muted-foreground">
+            Discover opportunities at leading companies powered by Paraform
+          </p>
         </div>
-      ))}
 
-      {jobs.length === 0 && (
-        <Card className="text-center py-12">
-          <CardContent>
-            <p className="text-muted-foreground">No open positions available at the moment.</p>
-          </CardContent>
-        </Card>
-      )}
+        <div className="grid gap-6 mt-12">
+          <Card className="text-left">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Paraform
+              </CardTitle>
+              <CardDescription>
+                We&apos;re building the future of recruiting. Join our team to revolutionize how companies find talent.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/paraform">
+                <Button className="w-full sm:w-auto">
+                  View Open Positions
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mt-16 text-sm text-muted-foreground">
+          <p>
+            This job board is powered by Paraform. Companies can integrate their 
+            Paraform account to automatically display open positions.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

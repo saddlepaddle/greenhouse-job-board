@@ -6,9 +6,10 @@ import { MapPin, Building2, DollarSign, Briefcase, Calendar } from "lucide-react
 import { ApplicationForm } from "~/components/application-form";
 import { Separator } from "~/components/ui/separator";
 
-export default async function JobDetailPage({ params }: { params: { id: string } }) {
+export default async function JobDetailPage({ params }: { params: Promise<{ company: string; id: string }> }) {
+  const { company, id } = await params;
   try {
-    const job = await api.greenhouse.getJob({ id: params.id });
+    const job = await api.greenhouse.getJob({ id });
     
     if (!job || job.status !== "open") {
       notFound();
@@ -108,7 +109,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ApplicationForm jobId={params.id} jobTitle={job.name} />
+            <ApplicationForm jobId={id} jobTitle={job.name} companySlug={company} />
           </CardContent>
         </Card>
       </div>
