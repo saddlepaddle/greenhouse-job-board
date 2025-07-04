@@ -29,10 +29,10 @@ export default async function ApplicationSubmittedPage({ params }: { params: Pro
           <CardContent className="space-y-6">
             <div className="space-y-4 text-muted-foreground">
               <p>
-                We've received your application and it's now under review. Our hiring team will carefully evaluate your qualifications.
+                We&apos;ve received your application and it&apos;s now under review. Our hiring team will carefully evaluate your qualifications.
               </p>
               <p>
-                You should expect to hear back from us within <strong>5-7 business days</strong>. We'll contact you via the email address you provided.
+                You should expect to hear back from us within <strong>5-7 business days</strong>. We&apos;ll contact you via the email address you provided.
               </p>
             </div>
             
@@ -40,7 +40,7 @@ export default async function ApplicationSubmittedPage({ params }: { params: Pro
               <h3 className="font-semibold mb-2">What happens next?</h3>
               <ol className="text-left space-y-2 text-sm text-muted-foreground">
                 <li>1. Your application will be reviewed by our hiring team</li>
-                <li>2. If selected, you'll receive an email to schedule an initial interview</li>
+                <li>2. If selected, you&apos;ll receive an email to schedule an initial interview</li>
                 <li>3. The interview process typically includes 2-3 rounds</li>
                 <li>4. Final candidates will receive an offer within 2 weeks of the last interview</li>
               </ol>
@@ -64,7 +64,8 @@ export default async function ApplicationSubmittedPage({ params }: { params: Pro
         </Card>
       </div>
     );
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error(error);
     notFound();
   }
 }

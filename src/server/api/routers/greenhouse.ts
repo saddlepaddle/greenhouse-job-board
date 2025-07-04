@@ -43,6 +43,7 @@ interface GreenhouseJob {
       unit: string;
     };
   };
+  content?: string; // HTML content from Job Board API
 }
 
 export interface GreenhouseUser {
@@ -84,12 +85,12 @@ const getAuthHeader = () => {
 };
 
 // Hard-code company data for now.
-const companies: Record<string, { slug: string; name: string; description: string; logo?: string }> = {
+const companies: Record<string, { slug: string; name: string; description: string; logo?: string; boardToken?: string }> = {
   paraform: {
     slug: "paraform",
     name: "Paraform",
     description: "We're building the future of recruiting. Join our team to revolutionize how companies find talent.",
-    logo: "/social/paraform/logo.svg"
+    logo: "/social/paraform/logo.svg",
   }
 };
 
