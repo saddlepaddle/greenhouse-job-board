@@ -4,7 +4,7 @@ import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 
 import { TRPCReactProvider } from "~/trpc/react";
-import { Header } from "~/components/layout/header";
+import { Header } from "~/app/components/Header";
 
 export const metadata: Metadata = {
   title: "Job Application | Paraform",

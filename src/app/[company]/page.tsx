@@ -1,5 +1,10 @@
-import { api } from "~/trpc/server";
+import groupBy from "lodash.groupby";
+import { Briefcase, Building2, DollarSign, MapPin } from "lucide-react";
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Badge } from "~/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -7,10 +12,25 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { Badge } from "~/components/ui/badge";
-import { MapPin, Building2, DollarSign, Briefcase } from "lucide-react";
-import Link from "next/link";
-import { Button } from "~/components/ui/button";
+import { api } from "~/trpc/server";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ company: string }>;
+}): Promise<Metadata> {
+  const { company: companySlug } = await params;
+  try {
+    const company = await api.greenhouse.getCompany({ slug: companySlug });
+    return {
+      title: `${company.name} Careers - Job Openings`,
+    };
+  } catch {
+    return {
+      title: "Company Not Found",
+    };
+  }
+}
 
 export default async function CompanyJobsPage({
   params,
@@ -23,23 +43,32 @@ export default async function CompanyJobsPage({
     const jobs = await api.greenhouse.getJobs();
 
     // Group jobs by department
-    const jobsByDepartment = jobs.reduce(
-      (acc, job) => {
-        const department = job.departments[0]?.name || "Other";
-        if (!acc[department]) {
-          acc[department] = [];
-        }
-        acc[department].push(job);
-        return acc;
-      },
-      {} as Record<string, typeof jobs>,
+    const jobsByDepartment = groupBy(
+      jobs,
+      (job) => job.departments[0]?.name ?? "Other",
     );
 
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">{company.name} Careers</h1>
-          <p className="text-muted-foreground mt-2">{company.description}</p>
+          <div className="flex items-start gap-6 mb-6">
+            {company.logo && (
+              <Image
+                src={company.logo}
+                alt={`${company.name} logo`}
+                width={64}
+                height={64}
+                className="object-contain"
+              />
+            )}
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold">{company.name} Careers</h1>
+              <p className="text-muted-foreground mt-2">{company.description}</p>
+              <p className="text-sm text-muted-foreground mt-4">
+                <span className="font-semibold text-foreground">{jobs.length}</span> open position{jobs.length !== 1 ? 's' : ''} across {Object.keys(jobsByDepartment).length} department{Object.keys(jobsByDepartment).length !== 1 ? 's' : ''}
+              </p>
+            </div>
+          </div>
         </div>
 
         {Object.entries(jobsByDepartment).map(
@@ -105,11 +134,6 @@ export default async function CompanyJobsPage({
                             </span>
                           </div>
                         )}
-                        <div className="mt-4">
-                          <Button variant="outline" className="w-full">
-                            View Details & Apply
-                          </Button>
-                        </div>
                       </CardContent>
                     </Card>
                   </Link>

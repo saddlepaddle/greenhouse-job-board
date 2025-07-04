@@ -2,6 +2,11 @@ import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { ArrowRight, Building2 } from "lucide-react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Paraform Job Board - Find Your Next Opportunity",
+};
 
 export default function LandingPage() {
   return (

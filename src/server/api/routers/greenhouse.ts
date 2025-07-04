@@ -45,6 +45,22 @@ interface GreenhouseJob {
   };
 }
 
+export interface GreenhouseUser {
+  id: number;
+  name: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  employee_id?: string;
+  created_at: string;
+  updated_at: string;
+  disabled: boolean;
+  permissions: {
+    can_create_private_tags: boolean;
+    can_email_candidates: boolean;
+  };
+}
+
 interface GreenhouseCandidate {
   id: number;
   first_name: string;
@@ -67,7 +83,7 @@ const getAuthHeader = () => {
   return `Basic ${base64}`;
 };
 
-// Hardcoded company data - in a real app, this would come from a database
+// Hard-code company data for now.
 const companies: Record<string, { slug: string; name: string; description: string; logo?: string }> = {
   paraform: {
     slug: "paraform",
@@ -78,7 +94,32 @@ const companies: Record<string, { slug: string; name: string; description: strin
 };
 
 export const greenhouseRouter = createTRPCRouter({
-  // Get company by slug
+  // Get current user info
+  getCurrentUser: publicProcedure.query(async (): Promise<GreenhouseUser | null> => {
+    try {
+      const response = await fetch(
+        `https://harvest.greenhouse.io/v1/users/${env.GREENHOUSE_USER_ID}`,
+        {
+          headers: {
+            Authorization: getAuthHeader(),
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.error(`Failed to fetch user: ${response.status} ${response.statusText}`);
+        return null;
+      }
+
+      const user = await response.json() as GreenhouseUser;
+      return user;
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      return null;
+    }
+  }),
+
   getCompany: publicProcedure
     .input(z.object({ slug: z.string() }))
     .query(({ input }) => {

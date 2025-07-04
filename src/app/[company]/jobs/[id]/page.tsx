@@ -5,6 +5,35 @@ import { Badge } from "~/components/ui/badge";
 import { MapPin, Building2, DollarSign, Briefcase, Calendar } from "lucide-react";
 import { ApplicationForm } from "~/components/application-form";
 import { Separator } from "~/components/ui/separator";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ company: string; id: string }>;
+}): Promise<Metadata> {
+  const { company: companySlug, id } = await params;
+  try {
+    const [job, company] = await Promise.all([
+      api.greenhouse.getJob({ id }),
+      api.greenhouse.getCompany({ slug: companySlug }),
+    ]);
+    
+    if (!job || job.status !== "open") {
+      return {
+        title: "Job Not Found",
+      };
+    }
+    
+    return {
+      title: `${job.name} at ${company.name} - Apply Now`,
+    };
+  } catch {
+    return {
+      title: "Job Not Found",
+    };
+  }
+}
 
 export default async function JobDetailPage({ params }: { params: Promise<{ company: string; id: string }> }) {
   const { company, id } = await params;
