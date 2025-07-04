@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import { api } from "~/trpc/react";
 import { Loader2 } from "lucide-react";
 import type { GreenhouseQuestion } from "~/server/api/routers/greenhouse";
+import { FileUpload } from "./FileUpload";
 
 interface DynamicApplicationFormProps {
   jobId: string;
@@ -138,12 +139,12 @@ export function DynamicApplicationForm({ jobId, companySlug, questions }: Dynami
         }
 
         return (
-          <Input
-            type="file"
+          <FileUpload
             id={question.name}
-            onChange={(e) => handleFileChange(question.name, e.target.files?.[0] ?? null)}
+            onChange={(file) => handleFileChange(question.name, file)}
             accept={question.name === 'resume' ? '.pdf,.doc,.docx' : undefined}
             required={isRequired}
+            value={formData[question.name] as { filename: string } | undefined}
           />
         );
 
