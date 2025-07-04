@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { MapPin, Building2, DollarSign, Briefcase, Calendar } from "lucide-react";
-import { ApplicationForm } from "~/components/application-form";
+import { DynamicApplicationForm } from "./components/DynamicApplicationForm";
+import { JobContent } from "./components/JobContent";
 import { Separator } from "~/components/ui/separator";
 import pluralize from "pluralize";
 import type { Metadata } from "next";
@@ -101,29 +102,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ comp
           </CardHeader>
           
           <CardContent>
-            <div className="prose prose-sm max-w-none">
-              <h3>About this role</h3>
-              <p>
-                We are looking for a talented {job.name} to join our {job.departments[0]?.name ?? "team"} in {job.offices[0]?.name ?? "our office"}.
-                This is an exciting opportunity to make a significant impact in a growing organization.
-              </p>
-              
-              <h3>What you&apos;ll do</h3>
-              <ul>
-                <li>Collaborate with cross-functional teams to deliver high-quality solutions</li>
-                <li>Take ownership of key projects and drive them to completion</li>
-                <li>Contribute to the growth and success of our organization</li>
-                <li>Participate in strategic planning and decision-making processes</li>
-              </ul>
-              
-              <h3>What we&apos;re looking for</h3>
-              <ul>
-                <li>Strong technical skills and relevant experience</li>
-                <li>Excellent communication and collaboration abilities</li>
-                <li>Problem-solving mindset and attention to detail</li>
-                <li>Passion for innovation and continuous learning</li>
-              </ul>
-            </div>
+            <JobContent content={job.content} />
           </CardContent>
         </Card>
 
@@ -138,7 +117,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ comp
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ApplicationForm jobId={id} jobTitle={job.name} companySlug={company} />
+            <DynamicApplicationForm jobId={id} jobTitle={job.name} companySlug={company} questions={job.questions} />
           </CardContent>
         </Card>
       </div>

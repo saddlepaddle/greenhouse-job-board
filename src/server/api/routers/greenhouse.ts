@@ -4,9 +4,19 @@
  */
 
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { env } from "~/env";
+import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { getDefaultJobContent, getDefaultQuestions } from "../utils/greenhouse-defaults";
 
+export interface GreenhouseQuestion {
+  required: boolean | null;
+  private: boolean;
+  label: string;
+  name: string;
+  type: 'short_text' | 'long_text' | 'attachment' | 'multi_value_single_select' | 'multi_value_multi_select' | 'yes_no';
+  values: Array<{ value: number; label: string }>;
+  description: string | null;
+}
 
 interface GreenhouseJob {
   id: number;
@@ -43,7 +53,8 @@ interface GreenhouseJob {
       unit: string;
     };
   };
-  content?: string; // HTML content from Job Board API
+  content: string; // HTML content from Job Board API (with fallback)
+  questions: Array<GreenhouseQuestion>; // Form questions (with fallback)
 }
 
 export interface GreenhouseUser {
@@ -186,6 +197,55 @@ export const greenhouseRouter = createTRPCRouter({
           throw new Error("Job not found");
         }
         
+        // Fetch job posts to get the actual job description
+        try {
+          const jobPostsResponse = await fetch(
+            `https://harvest.greenhouse.io/v1/jobs/${input.id}/job_posts?full_content=true`,
+            {
+              headers: {
+                Authorization: getAuthHeader(),
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          
+          if (jobPostsResponse.ok) {
+            const jobPosts = await jobPostsResponse.json() as Array<{
+              id: number;
+              title: string;
+              location: string;
+              content: string;
+              updated_at: string;
+              active: boolean;
+              questions: Array<GreenhouseQuestion>;
+            }>;
+            
+            const activePost = jobPosts.find(post => post.active) ?? jobPosts[0];
+            if (activePost) {
+              if (activePost.content) {
+                job.content = activePost.content;
+              }
+              if (activePost.questions && activePost.questions.length > 0) {
+                job.questions = activePost.questions;
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching job posts:", error);
+          // Continue without job post content
+        }
+        
+        // Provide fallback content and questions if not available
+        if (!job.content) {
+          const departmentName = job.departments[0]?.name ?? "team";
+          const officeName = job.offices[0]?.name ?? "our office";
+          job.content = getDefaultJobContent(job.name, departmentName, officeName);
+        }
+        
+        if (!job.questions || job.questions.length === 0) {
+          job.questions = getDefaultQuestions();
+        }
+        
         return job;
       } catch (error) {
         console.error("Error fetching job:", error);
@@ -197,58 +257,57 @@ export const greenhouseRouter = createTRPCRouter({
     .input(
       z.object({
         jobId: z.string(),
-        firstName: z.string().min(1, "First name is required"),
-        lastName: z.string().min(1, "Last name is required"),
-        email: z.string().email("Invalid email address"),
-        phone: z.string().optional(),
-        resume: z.object({
-          filename: z.string(),
-          content: z.string(), // base64 encoded
-          contentType: z.string(),
-        }),
-        coverLetter: z.string().optional(),
+        formData: z.record(z.any()), // Dynamic form data with Greenhouse field names
       })
     )
     .mutation(async ({ input }) => {
       try {
+        const { formData } = input;
+        
+        // Build request body from form data
         const requestBody = {
-          first_name: input.firstName,
-          last_name: input.lastName,
-          email_addresses: [
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          email_addresses: formData.email ? [
             {
-              value: input.email,
+              value: formData.email,
               type: "personal",
             },
-          ],
-          phone_numbers: input.phone
-            ? [
-                {
-                  value: input.phone,
-                  type: "mobile",
-                },
-              ]
-            : undefined,
+          ] : [],
           applications: [
             {
               job_id: parseInt(input.jobId),
             },
           ],
-          attachments: [
-            {
-              filename: input.resume.filename,
-              type: "resume",
-              content: input.resume.content,
-              content_type: input.resume.contentType,
-            },
-          ],
+          attachments: [],
         };
 
+        // Add phone if provided
+        if (formData.phone) {
+          requestBody.phone_numbers = [
+            {
+              value: formData.phone,
+              type: "mobile",
+            },
+          ];
+        }
+
+        // Add resume if provided
+        if (formData.resume && typeof formData.resume === 'object') {
+          requestBody.attachments.push({
+            filename: formData.resume.filename,
+            type: "resume",
+            content: formData.resume.content,
+            content_type: formData.resume.contentType,
+          });
+        }
+
         // Add cover letter if provided
-        if (input.coverLetter) {
+        if (formData.cover_letter) {
           requestBody.attachments.push({
             filename: "cover_letter.txt",
             type: "cover_letter",
-            content: Buffer.from(input.coverLetter).toString("base64"),
+            content: Buffer.from(formData.cover_letter).toString("base64"),
             content_type: "text/plain",
           });
         }
@@ -273,6 +332,7 @@ export const greenhouseRouter = createTRPCRouter({
         }
 
         const result = await response.json() as GreenhouseCandidate;
+
         return {
           success: true,
           candidateId: result.id,

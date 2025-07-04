@@ -37,7 +37,6 @@ export default async function CompanyJobsPage({
     const company = await api.greenhouse.getCompany({ slug: companySlug });
     const jobs = await api.greenhouse.getJobs();
 
-    // Group jobs by department
     const jobsByDepartment = groupBy(
       jobs,
       (job) => job.departments[0]?.name ?? "Other",
