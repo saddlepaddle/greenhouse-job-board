@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 
 import { TRPCReactProvider } from "~/trpc/react";
+import { Header } from "~/components/layout/header";
 
 export const metadata: Metadata = {
   title: "Job Application | Paraform",
@@ -22,6 +23,7 @@ export default function RootLayout({
     <html lang="en" className={`${geist.variable}`}>
       <body>
         <TRPCReactProvider>
+          <Header />
           <main className="flex min-h-screen flex-col">
             {children}
           </main>

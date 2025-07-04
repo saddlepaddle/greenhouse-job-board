@@ -8,6 +8,9 @@ export const env = createEnv({
    */
   server: {
     NODE_ENV: z.enum(["development", "test", "production"]),
+    GREENHOUSE_API_KEY: z.string(),
+    GREENHOUSE_USER_ID: z.string(),
+    HARDCODED_JOB_ID: z.string(),
   },
 
   /**
@@ -25,6 +28,9 @@ export const env = createEnv({
    */
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
+    GREENHOUSE_API_KEY: process.env.GREENHOUSE_API_KEY,
+    GREENHOUSE_USER_ID: process.env.GREENHOUSE_USER_ID,
+    HARDCODED_JOB_ID: process.env.HARDCODED_JOB_ID,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
